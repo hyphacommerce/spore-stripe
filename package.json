@@ -1,0 +1,13 @@
+{
+  "name": "hypha-spore-stripe-element",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.6.0",
+  "scripts": {
+    "build": "node scripts/build-element.mjs",
+    "check": "node scripts/build-element.mjs --check"
+  },
+  "devDependencies": {
+    "vite-plus": "1.3.0"
+  }
+}

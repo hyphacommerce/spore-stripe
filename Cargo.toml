@@ -1,23 +1,52 @@
 [package]
 name = "hypha-spore-stripe"
-edition.workspace = true
-version.workspace = true
-license.workspace = true
+edition = "2024"
+version = "0.1.0"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/hyphacommerce/spore-stripe"
+publish = false
 description = "Stripe payments built into Hypha's API: the payment provider, Stripe's webhook, the order.payment block and the storefront's <stripe-payment> element."
 
-# A spore depends on the facade only, and builds for wasm like every spore:
-# Stripe is called through the host's HTTP client.
+# A crate of its own, not part of a host's workspace.
+[workspace]
+
+# A spore depends on the facade only, and builds for wasm like every spore: Stripe is
+# called through the host's HTTP client. Hypha comes from git until its crates are
+# published; Cargo.lock pins the commit (`cargo update -p hypha-spore` moves it).
 [dependencies]
-hypha-spore = { path = "../../crates/hypha-spore", features = ["http"] }
-serde.workspace = true
-serde_json.workspace = true
-thiserror.workspace = true
+hypha-spore = { git = "https://github.com/hyphacommerce/hypha", branch = "main", features = ["http"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
 hmac = "0.13"
 sha2 = "0.11"
 
 [dev-dependencies]
-hypha-spore = { path = "../../crates/hypha-spore", features = ["http", "testing"] }
+hypha-spore = { git = "https://github.com/hyphacommerce/hypha", branch = "main", features = ["http", "testing"] }
 pollster = "0.4"
+# The route tests (`tests/routes.rs`): a host built with the spore, on Postgres.
+hypha-host-axum = { git = "https://github.com/hyphacommerce/hypha", branch = "main", features = ["testing"] }
+hypha-http = { git = "https://github.com/hyphacommerce/hypha", branch = "main" }
+axum = "0.8"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "net"] }
+tower = { version = "0.5.3", features = ["util"] }
 
-[lints]
-workspace = true
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = "warn"
+
+# As in Hypha: password hashing is slow on purpose and far slower unoptimized, which
+# would make the test host's logins crawl.
+[profile.dev]
+debug = "line-tables-only"
+
+[profile.dev.package."*"]
+debug = false
+
+[profile.dev.package.argon2]
+opt-level = 3
+
+[profile.dev.package.blake2]
+opt-level = 3
