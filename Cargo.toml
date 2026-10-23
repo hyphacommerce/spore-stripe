@@ -23,7 +23,7 @@ sha2 = "0.11"
 
 [dev-dependencies]
 hypha-spore = { git = "https://github.com/hyphacommerce/hypha", branch = "main", features = ["http", "testing"] }
-pollster = "0.4"
+pollster = "1.0"
 # The route tests (`tests/routes.rs`): a host built with the spore, on Postgres.
 hypha-host-axum = { git = "https://github.com/hyphacommerce/hypha", branch = "main", features = ["testing"] }
 hypha-http = { git = "https://github.com/hyphacommerce/hypha", branch = "main" }
