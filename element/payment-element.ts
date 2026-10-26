@@ -8,8 +8,9 @@
 // {message}` and `hypha:resize {height}`. Themed by `--hypha-*` custom properties (resolved to plain
 // colours for Stripe's Appearance API, its dark theme on a dark background).
 //
-// From the Stripe app (hypha-app-stripe). Bundled into `payment-element.js` beside it by `pnpm
-// spores:build` (`spores:check` fails while that's stale), served by the Stripe spore at
+// The same source as the Stripe app's element (hyphacommerce/app-stripe,
+// `src/browser/payment-element.ts`): a fix lands in both. Bundled into `payment-element.js` beside
+// it by `pnpm build` (`pnpm check` fails while that's stale), served by the spore at
 // /spores/stripe/elements/payment.js.
 
 const STRIPE_JS = "https://js.stripe.com/v3";
@@ -242,7 +243,9 @@ export class StripePayment extends HTMLElement {
       ["--hypha-color-error", "colorDanger"],
     ];
     for (const [property, variable] of colours) {
-      const value = read(property) && this.#rgb(`var(${property})`);
+      const raw = read(property);
+      // A browser resolves the probe; a test DOM doesn't, and the raw value stands in.
+      const value = raw && (this.#rgb(`var(${property})`) ?? { css: raw, luminance: 1 });
       if (value) variables[variable] = value.css;
     }
     const font = read("--hypha-font-family");
@@ -352,7 +355,8 @@ export class StripePayment extends HTMLElement {
   async #pay() {
     const stripe = this.#stripe;
     const elements = this.#elements;
-    if (!stripe || !elements || this.#busy) return;
+    const clientSecret = this.#props.client_secret;
+    if (!stripe || !elements || !clientSecret || this.#busy) return;
     this.#busy = true;
     this.#button.disabled = true;
     this.#error.textContent = "";
@@ -367,7 +371,7 @@ export class StripePayment extends HTMLElement {
         return this.#fail(submitted.error.message ?? "Check your payment details.");
       const result = await stripe.confirmPayment({
         elements,
-        clientSecret: this.#props.client_secret,
+        clientSecret,
         confirmParams: { return_url: this.#props.return_url ?? location.href },
         redirect: "if_required",
       });
@@ -376,7 +380,7 @@ export class StripePayment extends HTMLElement {
         // type: Stripe is asked. Unknown (no answer) leaves the button on.
         const message = result.error.message ?? "The payment didn't go through.";
         const now = await stripe
-          .retrievePaymentIntent(this.#props.client_secret)
+          .retrievePaymentIntent(clientSecret)
           .then((r) => r.paymentIntent?.status)
           .catch(() => undefined);
         if (now === "succeeded" || now === "processing" || now === "requires_capture") {
