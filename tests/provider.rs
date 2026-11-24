@@ -96,6 +96,7 @@ fn request(store_settings: Map<String, Value>) -> PaymentRequest {
         attempt: None,
         reference: None,
         instructions: None,
+        language: None,
         settings: json!({}),
         store_settings,
     }
